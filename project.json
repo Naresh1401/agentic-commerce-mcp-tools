@@ -1,0 +1,18 @@
+{
+  "id": "04",
+  "repo": "agentic-commerce-mcp-tools",
+  "title": "MCP Server for Commerce Tools",
+  "summary": "Lightweight MCP-style JSON tool server exposing commerce tools with schema validation and role-aware permissions.",
+  "copy": [
+    "mcp-server",
+    "backend",
+    "testing/contract_tests/test_mcp_schema.py",
+    "pytest.ini",
+    "mcp-tools.md"
+  ],
+  "extra_tests": {
+    "tests/test_mcp_server.py": "\n                from fastapi.testclient import TestClient\n                import sys\n                from pathlib import Path\n\n                sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'mcp-server'))\n                from server import app\n\n                client = TestClient(app)\n\n                def test_list_tools():\n                    response = client.get('/tools/list')\n                    assert response.status_code == 200\n                    names = {tool['name'] for tool in response.json()['tools']}\n                    assert {'search_products', 'create_checkout_session'} <= names\n\n                def test_partner_agent_blocked_from_cart_update():\n                    response = client.post('/tools/call', json={'tool': 'update_cart', 'role': 'partner_agent', 'input': {'cart_id': 'cart_123', 'sku': 'SKU-PASTA-001', 'quantity': 1, 'action': 'add'}})\n                    assert response.status_code == 403\n            "
+  },
+  "verify": "python3.11 -m pytest testing/contract_tests tests",
+  "run": "cd mcp-server && python3.11 server.py"
+}
